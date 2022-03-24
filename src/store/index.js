@@ -84,6 +84,15 @@ export default createStore({
     scrapEquipment (state, payload) {
       state.equipmentList[payload].status = "已报废"
       state.equipmentList[payload].scrapTime = getCurrentTime()
+    },
+    editEquipment (state, payload) {
+      const index = payload.index
+      const item = payload.item
+      state.equipmentList[index].status = item.status
+      state.equipmentList[index].location = item.location
+      state.equipmentList[index].use = item.use
+      state.equipmentList[index].maintainList = item.maintainList
+      console.log(index, item, 'comm')
     }
   },
 
