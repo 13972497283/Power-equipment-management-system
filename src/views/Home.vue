@@ -1,39 +1,21 @@
 <template>
   <div class="continer" @click="showEC=false">
-    <div class="continer__header">
-      <div class="continer__header__title">电力设备管理系统
-      </div>
-      <div class="continer__header__image" @mouseenter="showEC=!showEC">
-        <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
-      </div>
-      <div v-show="showEC" @mouseleave="showEC=!showEC">
-        <el-card shadow="hover" class="continer__header__edit">
-          <div>个人中心</div>
-          <el-divider />
-          <div>退出登录</div>
-        </el-card>
-      </div>
-    </div>
-
+    <Header />
     <div class="continer__main">
-      <div class="continer__main__aside">
-
-        <div class="menu">设备管理</div>
-        <el-divider style="margin:0px" />
-        <div class="menu">台账查询</div>
-      </div>
-
+      <Aside current='home' />
       <div class="continer__main__content">
         <div class="buttons">
           <el-input placeholder="请输入关键字" clearable v-model="input" style="width:3rem ;margin-right:.1rem" />
-          <el-button type="primary"><span class="iconfont" style="margin-right:.05rem;font-size:.2rem">&#xe621;</span>查询
+          <el-button type="primary" @click="handleSearch"><span class="iconfont"
+              style="margin-right:.05rem;font-size:.2rem">&#xe621;</span>查询
           </el-button>
           <el-button type="primary" @click="handleAdd"><span class="iconfont"
               style="margin-right:.05rem">&#xe60e;</span>新增
           </el-button>
         </div>
 
-        <el-table :data="tableData" style="width: 9.8rem" height="395" border highlight-current-row fit>
+        <el-table :data="empty==''? tableData:selectedList" style="width: 9.8rem" height="395" border
+          highlight-current-row fit>
           <el-table-column fixed prop="RFID" label="RFID编码" align="center" width="100" />
           <el-table-column prop="status" label="运行状态" align="center" width="100" />
           <el-table-column prop="manufacturer" label="厂家" align="center" width="200" />
@@ -58,7 +40,11 @@
               <el-button type="primary" :disabled="notUse(scope.$index,scope.row)"
                 @click="editItem(scope.row,scope.$index)">修改
               </el-button>
-              <el-button type="danger" :disabled="notUse(scope.$index,scope.row)" @click="scrapItem(scope.$index)">报废
+              <el-button type="danger" style="margin:6px 0px 0px 0px" :disabled="notUse(scope.$index,scope.row)"
+                @click="scrapItem(scope.$index)">报废
+              </el-button>
+              <el-button type="warning" :disabled="notUse(scope.$index,scope.row)" @click="deleteItem(scope.$index)"
+                style="margin:6px 0px 0px 12px">删除
               </el-button>
             </template>
 
@@ -72,6 +58,7 @@
             <!--  ref用于将表单节点绑定在此元素上 -->
             <div style="display:flex">
               <el-form-item label="RFID编码" prop="RFID">
+                <!-- prop用来对应校验规则rules中的每一项 -->
                 <el-input v-model="form.RFID" style="width:2rem " />
               </el-form-item>
               <el-form-item label="设备用途" prop="use">
@@ -104,10 +91,8 @@
                   <el-option label="正常" value="正常" />
                   <el-option label="暂停" value="暂停" />
                   <el-option label="维修中" value="维修中" />
-                  <!-- <el-option label="报废" value="报废" /> -->
                 </el-select>
               </el-form-item>
-              <!-- <input v-model="test" /> -->
             </div>
           </el-form>
           <template #footer>
@@ -121,7 +106,7 @@
 
         <!-- 修改 -->
         <el-dialog v-model="editDialogVisible" :title="currentTitle" width="40%" :before-close="handleClose">
-          <el-form :model="currentItem" label-width="120px">
+          <el-form :model="currentItem" label-width="120px" :rules="rules" ref="editrule">
             <!-- <el-form :model="currentItem" label-width="120px" :rules="rules" ref="formrule"> -->
             <!--  ref用于将表单节点绑定在此元素上 -->
 
@@ -149,14 +134,14 @@
               @click="addmaintain=true">新建维修
             </el-button>
 
-            <el-form-item label="维修时间" v-if="addmaintain">
+            <el-form-item label="维修时间" v-if="addmaintain" prop="newMaintainTime">
               <el-date-picker v-model="newMaintain.time" type="date" placeholder="选择日期" style="width: 2rem"
                 format="YYYY/MM/DD" value-format="YYYY-MM-DD" />
               <el-button type="danger" style="margin-left:5px" @click="deleteNewMaintain">删除</el-button>
               <el-button type="primary" style="margin-left:5px" @click="handleAddMaintain">确认</el-button>
 
             </el-form-item>
-            <el-form-item label="维修描述" v-if="addmaintain">
+            <el-form-item label="维修描述" v-if="addmaintain" prop="newMaintainDescribe">
               <el-input type="textarea" style="width:2rem " rows="2" v-model="newMaintain.describe" />
 
             </el-form-item>
@@ -190,9 +175,31 @@
   import {
     useStore
   } from 'vuex'
+  import
+  Header
+  from '../components/Header'
+  import Aside from '../components/Aside.vue'
 
+  function clone(obj) {
+    if (typeof obj === "string", typeof obj === "number", typeof obj === "boolean", typeof obj === "undefined") {
+      return obj;
+    } else if (Array.isArray(obj)) {
+      let arr = JSON.parse(JSON.stringify(obj));
+      return arr;
+    } else if (obj instanceof(obj)) {
+      let obj2 = {};
+      for (let k in obj) {
+        obj2[k] = clone(obj[k]);
+      }
+      return obj2;
+    }
+  }
   export default {
     name: 'Home',
+    components: {
+      Header,
+      Aside
+    },
     setup() {
       let showEC = ref(false)
       let input = ref("")
@@ -203,6 +210,9 @@
       let currentItem = ref({})
       let currentTitle = ref('')
       let addmaintain = ref(false)
+      let empty = ref('')
+      let selectedList = ref([])
+
       let newMaintain = ref({
         time: '',
         describe: ''
@@ -270,13 +280,21 @@
           message: '请选择运行状态',
           trigger: 'blur'
         }],
+        newMaintainTime: [{
+          required: true,
+          message: '请选择维修时间，如不需要此项请点击"删除"',
+          trigger: 'blur'
+        }],
+        newMaintainDescribe: [{
+          required: true,
+          message: '请输入维修描述，如不需要此项请点击"删除"',
+          trigger: 'blur'
+        }]
       })
       let formrule = ref(null) //将表单节点绑定在此元素上
-
       const addSubmit = () => {
-
         const subForm = form.value
-        formrule.value.validate(valid => {
+        formrule.value.validate(valid => { //根据输入是否合法进行不同操作
           if (valid) {
             console.log(111)
             store.commit('addEquipments', subForm)
@@ -286,9 +304,7 @@
               message: '添加成功',
               type: 'success',
             })
-
           } else {
-
             ElMessage({
               message: '添加失败，存在不符合要求的输入',
               type: 'error',
@@ -319,7 +335,28 @@
       }
 
       const scrapItem = (index) => {
-        store.commit('scrapEquipment', index)
+        ElMessageBox.confirm(
+            '是否确定报废该设备？该操作不可逆，报废后将无法操作该设备，请谨慎操作！！！',
+            'Warning', {
+              confirmButtonText: '确定',
+              cancelButtonText: '取消',
+              type: 'warning',
+            }
+          )
+          .then(() => {
+            store.commit('scrapEquipment', index)
+            ElMessage({
+              type: 'success',
+              message: '操作成功',
+            })
+          })
+          .catch(() => {
+            ElMessage({
+              type: 'info',
+              message: '操作取消',
+            })
+          })
+
       }
       const notUse = (index, row) => {
         if (row.status == "已报废") {
@@ -335,7 +372,10 @@
       }
       const editItem = (row, index) => {
         editDialogVisible.value = true
-        currentItem.value = row
+        currentItem.value.status = row.status
+        currentItem.value.location = row.location
+        currentItem.value.use = row.use
+        currentItem.value.maintainList = clone(row.maintainList)
         currentTitle.value = currentItem.value.RFID
         console.log(currentItem.value)
         equipmentIndex.value = index
@@ -355,13 +395,137 @@
         addmaintain.value = false
         console.log(currentItem.value.maintainList)
       }
+
+      let editrule = ref(null)
+
       const editSubmit = () => {
-        store.commit('editEquipment', {
-          'index': equipmentIndex.value,
-          'item': currentItem.value
+
+        editrule.value.validate(valid => { //根据输入是否合法进行不同操作
+          if (valid) {
+            //   ElMessage({
+            //     message: '添加成功',
+            //     type: 'success',
+            //   })
+            // } else {
+            //   ElMessage({
+            //     message: '添加失败，存在不符合要求的输入',
+            //     type: 'error',
+            //   })
+
+            ElMessageBox.confirm(
+                '确认提交此次修改吗',
+                'Warning', {
+                  confirmButtonText: '确认',
+                  cancelButtonText: '取消',
+                  type: 'warning',
+                }
+              )
+              .then(() => {
+                store.commit('editEquipment', {
+                  'index': equipmentIndex.value,
+                  'item': currentItem.value
+                })
+                editDialogVisible.value = false
+                ElMessage({
+                  type: 'success',
+                  message: '修改信息已提交',
+                })
+              }).catch(() => {
+                ElMessage({
+                  type: 'info',
+                  message: '取消操作',
+                })
+              })
+          } else {
+            ElMessage({
+              message: '修改失败，存在不符合要求的输入',
+              type: 'error',
+            })
+          }
         })
-        editDialogVisible.value = false
+
+
+        // ElMessageBox.confirm(
+        //     '确认提交此次修改吗',
+        //     'Warning', {
+        //       confirmButtonText: '确认',
+        //       cancelButtonText: '取消',
+        //       type: 'warning',
+        //     }
+        //   )
+        //   .then(() => {
+        //     store.commit('editEquipment', {
+        //       'index': equipmentIndex.value,
+        //       'item': currentItem.value
+        //     })
+        //     editDialogVisible.value = false
+        //     ElMessage({
+        //       type: 'success',
+        //       message: '修改信息已提交',
+        //     })
+        //   })
+        //   .catch(() => {
+        //     ElMessage({
+        //       type: 'info',
+        //       message: '取消操作',
+        //     })
+        //   })
+
+
       }
+      const deleteItem = (index) => {
+        ElMessageBox.confirm(
+            '确认删除该设备信息？该操作不可逆，删除后将无法恢复该设备任何信息，请谨慎操作！！！',
+            'Warning', {
+              confirmButtonText: '确认',
+              cancelButtonText: '取消',
+              type: 'warning',
+            }
+          )
+          .then(() => {
+            store.commit('deleteEquipment', index)
+            selectedList.value.splice(index, 1) //查询筛选中一并删除
+            ElMessage({
+              type: 'success',
+              message: '设备删除成功',
+            })
+          })
+          .catch(() => {
+            ElMessage({
+              type: 'info',
+              message: '取消操作',
+            })
+          })
+      }
+      const handleSearch = () => {
+        selectedList.value = []
+        empty.value = input.value
+        let obj = {}
+        if (empty.value !== '') {
+          for (let equipment in tableData) {
+
+            for (let item in tableData[equipment]) {
+
+              if (tableData[equipment][item].indexOf(input.value) > -1) {
+
+                if (!obj[tableData[equipment].RFID]) {
+                  console.log(tableData[equipment][item], '符合')
+                  selectedList.value.push(tableData[equipment])
+
+                  obj[tableData[equipment].RFID] = true
+
+
+                }
+              }
+
+
+            }
+
+          }
+        }
+
+      }
+
       return {
         tableData,
         showEC,
@@ -373,6 +537,7 @@
         rules,
         addSubmit,
         formrule,
+        editrule,
         handleAdd,
         scrapItem,
         notUse,
@@ -384,7 +549,11 @@
         handleAddMaintain,
         newMaintain,
         deleteNewMaintain,
-        editSubmit
+        editSubmit,
+        deleteItem,
+        selectedList,
+        handleSearch,
+        empty
       }
     }
 
@@ -403,37 +572,7 @@
     // min-height: 99vh;
     box-sizing: border-box;
 
-    &__header {
-      position: relative;
-      margin: 0 auto;
-      min-height: 10vh;
-      background-color: rgb(85, 116, 163);
-      display: flex;
 
-      &__edit {
-        position: absolute;
-        top: .58rem;
-        right: .4rem;
-        z-index: 100;
-        cursor: pointer;
-
-      }
-
-      &__title {
-        font-size: .3rem;
-        flex: 1;
-        margin: auto .8rem;
-        letter-spacing: .1rem;
-        color: #fff;
-        min-width: 5rem;
-      }
-
-      &__image {
-        margin: auto .65rem;
-        cursor: pointer;
-
-      }
-    }
 
     &__main {
       display: flex;
@@ -441,11 +580,11 @@
       padding: .2rem;
       background-color: #F2F6FC;
 
-      &__aside {
-        position: relative;
-        width: 1.8rem;
-        margin-right: .2rem;
-      }
+      // &__aside {
+      //   position: relative;
+      //   width: 1.8rem;
+      //   margin-right: .2rem;
+      // }
 
       &__content {
         background: #fff;
@@ -454,19 +593,6 @@
 
       }
     }
-  }
-
-  .menu {
-    position: relative;
-    width: 1.8rem;
-    height: .6rem;
-    line-height: .6rem;
-    text-align: center;
-    font-size: .15rem;
-    background: #FFF;
-    border-radius: .04rem;
-    letter-spacing: .02rem;
-    cursor: pointer;
   }
 
   .buttons {

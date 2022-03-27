@@ -72,8 +72,6 @@ export default createStore({
 
   },
   mutations: {
-
-
     setLoginState (state, payload) {//payload为参数
       state.loginState = payload
     },
@@ -93,6 +91,9 @@ export default createStore({
       state.equipmentList[index].use = item.use
       state.equipmentList[index].maintainList = item.maintainList
       console.log(index, item, 'comm')
+    },
+    deleteEquipment (state, payload) {
+      state.equipmentList.splice(payload, 1)
     }
   },
 
