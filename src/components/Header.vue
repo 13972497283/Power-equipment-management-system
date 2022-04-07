@@ -7,10 +7,33 @@
        </div>
        <div v-show="showEC" @mouseleave="showEC=!showEC">
          <el-card shadow="hover" class="header__edit">
-           <div>个人中心</div>
+           <div @click="editVisible">个人中心</div>
            <el-divider />
            <div>退出登录</div>
          </el-card>
+
+         <el-dialog v-model="dialogVisible" title="个人中心" width="30%" :before-close="handleClose">
+        <!-- 头像 -->
+          <el-upload
+          class="avatar-uploader"
+          action="https://jsonplaceholder.typicode.com/posts/"
+          :show-file-list="false"
+          :on-success="handleAvatarSuccess"
+          :before-upload="beforeAvatarUpload"
+        >
+          <img v-if="imageUrl" :src="imageUrl" class="avatar" />
+          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+        </el-upload>
+
+
+           <template #footer>
+             <span class="dialog-footer">
+               <el-button @click="dialogVisible = false">Cancel</el-button>
+               <el-button type="primary" @click="dialogVisible = false">Confirm</el-button>
+             </span>
+           </template>
+         </el-dialog>
+
        </div>
      </div>
    </template>
@@ -20,12 +43,36 @@
        ref,
        reactive,
      } from 'vue'
+     import {
+       ElMessageBox
+     } from 'element-plus'
+
      export default {
        name: 'Header',
        setup() {
          let showEC = ref(false)
+         const dialogVisible = ref(false)
+         const editVisible = () => {
+           dialogVisible.value = true
+           console.log("个人中心")
+         }
+         const handleClose = () => {
+           ElMessageBox.confirm('Are you sure to close this dialog?')
+             .then(() => {
+               done()
+             })
+             .catch(() => {
+               // catch error
+             })
+         }
+
+
+
          return {
-           showEC
+           showEC,
+           handleClose,
+           dialogVisible,
+           editVisible
          }
        }
      }
@@ -77,6 +124,10 @@
        border-radius: .04rem;
        letter-spacing: .02rem;
        cursor: pointer;
+     }
+
+     .dialog-footer button:first-child {
+       margin-right: 10px;
      }
 
    </style>

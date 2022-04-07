@@ -8,7 +8,7 @@
     <el-divider style="margin:0px" />
     <div :class="{'menu':true, 'clicked':'record'===current}">
       <router-link :to="{name:'Record'}">
-        台账查询
+        操作记录
       </router-link>
     </div>
   </div>

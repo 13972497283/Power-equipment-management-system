@@ -6,30 +6,19 @@
       <div class="continer__main__content">
         <div class="buttons">
           <el-input placeholder="请输入关键字" clearable v-model="input" style="width:3rem ;margin-right:.1rem" />
-          <el-button type="primary"><span class="iconfont" style="margin-right:.05rem;font-size:.2rem">&#xe621;</span>查询
+          <el-button type="primary" @click="handleSearch"><span class="iconfont"
+              style="margin-right:.05rem;font-size:.2rem">&#xe621;</span>查询
           </el-button>
         </div>
 
-        <el-table :data="tableData" style="width: 9.8rem" height="395" border highlight-current-row fit>
-          <el-table-column fixed prop="RFID" label="RFID编码" align="center" width="100" />
-          <el-table-column prop="status" label="运行状态" align="center" width="100" />
-          <el-table-column prop="manufacturer" label="厂家" align="center" width="200" />
-          <el-table-column prop="money" label="购置金额" align="center" width="100" />
-          <el-table-column prop="buyTime" label="购置时间" align="center" width="200" />
-          <el-table-column prop="scrapTime" label="报废时间" align="center" width="200" />
-          <el-table-column prop="location" label="所在地" align="center" width="200" />
-          <el-table-column prop="use" label="设备用途" align="center" width="200" />
-          <el-table-column prop="type" label="设备类型" align="center" width="100" />
-          <!-- prop="maintainList"  scope.row就相当于取这一行的所有数据，即列表中这完整的一项-->
-          <el-table-column label="维修情况" align="center" width="200">
-            <template v-slot="scope">
-              <div v-for="(item,index) in scope.row.maintainList" :key="index">
-                {{item.time}}:{{item.describe}}
-              </div>
-            </template>
-          </el-table-column>
-          <el-table-column label=" 操作" fixed="right" align="center" width="200">
-            <!-- <div> -->
+        <el-table :data="empty==''?recordList:selectedList" style="width: 9.8rem" height="395" border
+          highlight-current-row fit>
+          <el-table-column prop="RFID" label="RFID编码" align="center" />
+          <el-table-column prop="time" label="时间" align="center" />
+          <el-table-column prop="handle" label="操作" align="center" />
+          <el-table-column prop="handler" label="操作者" align="center" />
+          <!-- <el-table-column label=" 操作" align="center">
+       
             <template v-slot="scope">
               <el-button @click="openDetail(scope)">查看</el-button>
               <el-button type="primary" :disabled="notUse(scope.$index,scope.row)"
@@ -39,10 +28,8 @@
               </el-button>
             </template>
 
-          </el-table-column>
+          </el-table-column> -->
         </el-table>
-
-
       </div>
     </div>
   </div>
@@ -51,6 +38,13 @@
 <script>
   import Header from '../components/Header.vue'
   import Aside from '../components/Aside.vue'
+  import {
+    useStore
+  } from 'vuex'
+  import {
+    ref,
+    reactive
+  } from 'vue'
   export default {
     name: 'Record',
     components: {
@@ -58,7 +52,40 @@
       Aside
     },
     setup() {
+      const store = useStore()
+      const recordList = reactive(store.state.historyRecord)
+      let input = ref('')
+      let empty = ref('')
+      let selectedList = ref([])
+      const handleSearch = () => {
+        selectedList.value = []
+        empty.value = input.value
+        let obj = {}
+        if (empty.value !== '') {
+          for (let record in recordList) {
+            for (let item in recordList[record]) {
+              if (recordList[record][item].indexOf(input.value) > -1) {
+                if (!obj[recordList[record].key]) {
+                  console.log(recordList[record][item], '符合')
+                  selectedList.value.push(recordList[record])
+                  obj[recordList[record].time] = true
+                }
+              }
 
+
+            }
+
+          }
+        }
+        console.log(selectedList)
+      }
+      return {
+        recordList,
+        handleSearch,
+        input,
+        empty,
+        selectedList
+      }
     }
   }
 

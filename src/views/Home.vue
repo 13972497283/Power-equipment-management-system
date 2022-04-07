@@ -18,14 +18,17 @@
           highlight-current-row fit>
           <el-table-column fixed prop="RFID" label="RFID编码" align="center" width="100" />
           <el-table-column prop="status" label="运行状态" align="center" width="100" />
-          <el-table-column prop="manufacturer" label="厂家" align="center" width="200" />
-          <el-table-column prop="money" label="购置金额" align="center" width="100" />
-          <el-table-column prop="buyTime" label="购置时间" align="center" width="200" />
-          <el-table-column prop="scrapTime" label="报废时间" align="center" width="200" />
-          <el-table-column prop="location" label="所在地" align="center" width="200" />
           <el-table-column prop="use" label="设备用途" align="center" width="200" />
           <el-table-column prop="type" label="设备类型" align="center" width="100" />
+          <el-table-column prop="buyTime" label="购置时间" align="center" width="200" />
+          <el-table-column prop="location" label="所在地" align="center" width="200" />
+
+          <el-table-column prop="scrapTime" label="报废时间" align="center" width="200" />
+
           <!-- prop="maintainList"  scope.row就相当于取这一行的所有数据，即列表中这完整的一项-->
+          <el-table-column prop="manufacturer" label="厂家" align="center" width="200" />
+          <el-table-column prop="money" label="购置金额" align="center" width="100" />
+
           <el-table-column label="维修情况" align="center" width="200">
             <template v-slot="scope">
               <div v-for="(item,index) in scope.row.maintainList" :key="index">
@@ -41,10 +44,10 @@
                 @click="editItem(scope.row,scope.$index)">修改
               </el-button>
               <el-button type="danger" style="margin:6px 0px 0px 0px" :disabled="notUse(scope.$index,scope.row)"
-                @click="scrapItem(scope.$index)">报废
+                @click="scrapItem(scope.$index,scope.row)">报废
               </el-button>
-              <el-button type="warning" :disabled="notUse(scope.$index,scope.row)" @click="deleteItem(scope.$index)"
-                style="margin:6px 0px 0px 12px">删除
+              <el-button type="warning" :disabled="notUse(scope.$index,scope.row)"
+                @click="deleteItem(scope.$index,scope.row)" style="margin:6px 0px 0px 12px">删除
               </el-button>
             </template>
 
@@ -130,7 +133,7 @@
               </template>
             </el-form-item>
 
-            <el-button type="text" style="margin-left:1.21rem; position=relative;margin-top:-40px"
+            <el-button type="text" style="margin-left:1.21rem; position=relative;margin-top:-50px"
               @click="addmaintain=true">新建维修
             </el-button>
 
@@ -164,8 +167,7 @@
 <script>
   import {
     ref,
-    reactive,
-    nextTick
+    reactive
   } from 'vue'
   import '../style/iconfont.css'
   import {
@@ -296,9 +298,16 @@
         const subForm = form.value
         formrule.value.validate(valid => { //根据输入是否合法进行不同操作
           if (valid) {
+
             console.log(111)
             store.commit('addEquipments', subForm)
-            console.log(store.state.equipmentList, form)
+            store.commit('addRecord', {
+              'RFID': subForm.RFID,
+              'handle': '新增设备'
+            })
+            console.log(store.state.historyRecord, '历史记录')
+
+
             dialogVisible.value = false
             ElMessage({
               message: '添加成功',
@@ -332,9 +341,10 @@
         }
         console.log(2)
         dialogVisible.value = true
+
       }
 
-      const scrapItem = (index) => {
+      const scrapItem = (index, row) => {
         ElMessageBox.confirm(
             '是否确定报废该设备？该操作不可逆，报废后将无法操作该设备，请谨慎操作！！！',
             'Warning', {
@@ -345,6 +355,10 @@
           )
           .then(() => {
             store.commit('scrapEquipment', index)
+            store.commit('addRecord', {
+              'RFID': row.RFID,
+              'handle': '报废设备'
+            })
             ElMessage({
               type: 'success',
               message: '操作成功',
@@ -376,13 +390,16 @@
         currentItem.value.location = row.location
         currentItem.value.use = row.use
         currentItem.value.maintainList = clone(row.maintainList)
-        currentTitle.value = currentItem.value.RFID
+        currentTitle.value = row.RFID
         console.log(currentItem.value)
         equipmentIndex.value = index
       }
 
       const handleAddMaintain = () => {
         addmaintain.value = false
+        if (!currentItem.value.maintainList) {
+          currentItem.value.maintainList = []
+        }
         currentItem.value.maintainList.push(newMaintain.value)
         console.log(currentItem)
         newMaintain.value = {
@@ -424,6 +441,10 @@
                 store.commit('editEquipment', {
                   'index': equipmentIndex.value,
                   'item': currentItem.value
+                })
+                store.commit('addRecord', {
+                  'RFID': currentTitle.value,
+                  'handle': '修改设备信息'
                 })
                 editDialogVisible.value = false
                 ElMessage({
@@ -473,7 +494,7 @@
 
 
       }
-      const deleteItem = (index) => {
+      const deleteItem = (index, row) => {
         ElMessageBox.confirm(
             '确认删除该设备信息？该操作不可逆，删除后将无法恢复该设备任何信息，请谨慎操作！！！',
             'Warning', {
@@ -484,6 +505,10 @@
           )
           .then(() => {
             store.commit('deleteEquipment', index)
+            store.commit('addRecord', {
+              'RFID': row.RFID,
+              'handle': '删除设备信息'
+            })
             selectedList.value.splice(index, 1) //查询筛选中一并删除
             ElMessage({
               type: 'success',
@@ -566,26 +591,14 @@
   .continer {
     margin: 0;
     padding: 0;
-    // width: 100%;
     background-color: #F2F6FC;
     margin-bottom: 0;
-    // min-height: 99vh;
-    box-sizing: border-box;
-
-
-
+     box-sizing: border-box;
     &__main {
       display: flex;
       margin: 0 auto;
       padding: .2rem;
       background-color: #F2F6FC;
-
-      // &__aside {
-      //   position: relative;
-      //   width: 1.8rem;
-      //   margin-right: .2rem;
-      // }
-
       &__content {
         background: #fff;
         padding: .2rem;
