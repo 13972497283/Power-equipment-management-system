@@ -61,16 +61,23 @@ const getLocalRecordList = () => {
   }
 }
 
+const setLocalIdentifications = (state) => {
+  localStorage.identifications = JSON.stringify(state.identifications)
+}
 export default createStore({
   state: {
-    identifications: [{
-      name: 'admin',
-      password: '123456'
-    },
-    {
-      name: 'gLeader',
-      password: '123456'
-    }], //管理员与组长的账号密码
+    identifications: JSON.parse(localStorage.identifications),
+    //  [{
+    //   name: 'admin',
+    //   password: '123456',
+    //   imageURL: ''
+    // },
+    // {
+    //   name: 'gLeader',
+    //   password: '123456',
+    //   imageURL: ''
+    // }], 
+    //管理员与组长的账号密码
     loginState: JSON.parse(localStorage.loginState || null),//判断登陆者的身份，1为管理员，2为组长,0是未登录
     equipmentList: getLocalEquipmentList(),
     // [{
@@ -150,7 +157,6 @@ export default createStore({
       console.log("vuex中历史记录")
       console.log(state.loginState, "登录状态")
       const { RFID, handle } = payload
-
       const currentRecord = {
         RFID: RFID,
         handle: handle,
@@ -158,11 +164,22 @@ export default createStore({
         handler: state.identifications[state.loginState - 1].name
         // handler: '管理员'
       }
+      console.log(currentRecord.handler, "操作者")
       state.historyRecord.push(currentRecord)
       console.log(state.historyRecord)
       setLocalRecordList(state)
+    },
+    setNewPassWord (state, payload) {
+      const newpassword = payload
+      state.identifications[state.loginState - 1].password = newpassword
+      setLocalIdentifications(state)
+    },
+    setHeadImage (state, payload) {
+      const img = payload
+      state.identifications[state.loginState - 1].imageURL = img
+      setLocalIdentifications(state)
+      console.log(state.identifications, "identifications")
     }
-
   },
 
 

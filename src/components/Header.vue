@@ -3,7 +3,7 @@
        <div class="header__title">电力设备管理系统
        </div>
        <div class="header__image" @mouseenter="showEC=!showEC">
-         <el-avatar src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"></el-avatar>
+         <el-avatar :src="imgUrl"></el-avatar>
        </div>
        <div v-show="showEC" @mouseleave="showEC=!showEC">
          <el-card shadow="hover" class="header__edit">
@@ -14,22 +14,26 @@
 
          <el-dialog v-model="dialogVisible" title="个人中心" width="30%" :before-close="handleClose">
         <!-- 头像 -->
-          <el-upload
-          class="avatar-uploader"
-          action="https://jsonplaceholder.typicode.com/posts/"
-          :show-file-list="false"
-          :on-success="handleAvatarSuccess"
-          :before-upload="beforeAvatarUpload"
-        >
-          <img v-if="imageUrl" :src="imageUrl" class="avatar" />
-          <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
-        </el-upload>
-
-
+        
+           <div        >
+          <img style="width: 1rem; height: 1rem;" v-if="imgUrl" :src="imgUrl" @click="changeImage"  />
+          <input type="file"  id="upload" style="display:none;" accept="image/gif,image/jpeg,image/png,image/jpg" @change="changepic"/>
+          
+        </div>
+        <div>用户名：{{username}}</div>
+        <el-button type="text" @click="showOldInput=!showOldInput">想要修改密码？点这里</el-button>
+        <div style="display: flex;">
+          <el-input v-if="showOldInput" type="password" v-model="oldpassword" placeholder="请输入原始密码" clearable />
+        <el-button type="primary" v-if="showOldInput" @click="handleCheck" >验证</el-button>
+        </div>
+        
+        
+        <el-input v-if="showNewInput"  type="password" v-model="newpassword" placeholder="请输入新密码" clearable />
+        <el-input v-if="showNewInput"  type="password" v-model="ensurepassword" placeholder="请再次确认新密码" clearable />
            <template #footer>
              <span class="dialog-footer">
-               <el-button @click="dialogVisible = false">Cancel</el-button>
-               <el-button type="primary" @click="dialogVisible = false">Confirm</el-button>
+               <el-button @click="dialogVisible = false">取消</el-button>
+               <el-button type="primary" @click="handleSubmit">提交</el-button>
              </span>
            </template>
          </el-dialog>
@@ -38,7 +42,7 @@
      </div>
    </template>
 
-   <script>
+   <script >
      import {
        ref,
        reactive,
@@ -46,10 +50,78 @@
      import {
        ElMessageBox
      } from 'element-plus'
-
+     import { Plus } from '@element-plus/icons-vue'
+     import { UploadFilled } from '@element-plus/icons-vue'
+import '../style/iconfont.css'
+import {
+    useStore
+  } from 'vuex'
+  import { ElMessage } from 'element-plus'
      export default {
        name: 'Header',
        setup() {
+        //  密码修改
+const store=useStore()
+const username=store.state.identifications[store.state.loginState-1].name
+console.log(username,"username")
+const oldpassword=ref("")
+const newpassword=ref("")
+const ensurepassword=ref("")
+const showNewInput=ref(false)
+const showOldInput=ref(false)
+const handleCheck=()=>{
+  if(oldpassword.value==store.state.identifications[store.state.loginState-1].password){
+    showOldInput.value=false
+    showNewInput.value=true
+  }else{
+    ElMessage({
+    showClose: true,
+    message: '密码验证错误！！！',
+    type: 'error',
+  })
+  }
+}
+const handleSubmit=()=>{
+if(newpassword.value!==''&&ensurepassword.value!==''&&newpassword.value===ensurepassword.value){
+  store.commit("setNewPassWord",newpassword)
+  ElMessage({
+    showClose: true,
+    message: '密码修改成功！',
+    type: 'success',
+  })
+}else{
+  ElMessage({
+    showClose: true,
+    message: '两次密码不同，密码修改失败！',
+    type: 'error',
+  })
+}
+dialogVisible.value=false
+}
+// 图片上传
+const imgUrl=ref(store.state.identifications[store.state.loginState-1].imageURL||'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png')
+// if(store.state.identifications[store.state.loginState-1].imageURL){
+// const  imgUrl=ref(store.state.identifications[store.state.loginState-1].imageURL
+// }
+
+function changeImage(){
+  document.getElementById('upload').click()
+}
+var f
+var img
+    function changepic () {
+      var reads = new FileReader()
+      f = document.getElementById('upload').files[0]
+      reads.readAsDataURL(f)
+      reads.onload = function () {
+        // document.getElementById('upload').src = this.result
+        imgUrl.value = this.result
+        // sessionStorage.img = JSON.stringify(imgUrl.value)
+        store.commit("setHeadImage",imgUrl.value)
+        console.log(this.result)
+      }
+    }
+  
          let showEC = ref(false)
          const dialogVisible = ref(false)
          const editVisible = () => {
@@ -59,20 +131,28 @@
          const handleClose = () => {
            ElMessageBox.confirm('Are you sure to close this dialog?')
              .then(() => {
-               done()
+          done()
              })
              .catch(() => {
                // catch error
              })
          }
-
-
-
          return {
            showEC,
            handleClose,
            dialogVisible,
-           editVisible
+           editVisible,
+          changepic,
+           imgUrl,
+           changeImage,
+           username,
+           oldpassword,
+           newpassword,
+           ensurepassword,
+          showNewInput,
+          showOldInput,
+          handleCheck,
+          handleSubmit
          }
        }
      }
@@ -129,5 +209,14 @@
      .dialog-footer button:first-child {
        margin-right: 10px;
      }
+
+  .avatar {
+    width: 178px;
+    height: 178px;
+    display: block;
+  }
+  .headImage{
+   font-size: 0.7rem;
+  }
 
    </style>

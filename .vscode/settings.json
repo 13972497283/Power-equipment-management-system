@@ -3,5 +3,5 @@
   "beautify.ignore": "",
   "files.associations":{
     "*.vue": "html"
-}
+  }
 }
