@@ -41,18 +41,14 @@
             console.log(store.state.loginState, 'vux')
             if (account.value == accountList[0].name) {
               store.commit('setLoginState', 1)
-              console.log(store.state.loginState, '从vuex拿的数据')
             } else {
               store.commit('setLoginState', 2)
-              console.log(store.state.loginState, '从vuex拿的数据')
             }
             router.push({
               name: 'Home'
             })
           }
         }
-
-        console.log(accountList)
       }
       return {
         logined,

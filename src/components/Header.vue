@@ -9,27 +9,27 @@
          <el-card shadow="hover" class="header__edit">
            <div @click="editVisible">个人中心</div>
            <el-divider />
-           <div>退出登录</div>
+           <div @click="logout">退出登录</div>
          </el-card>
 
-         <el-dialog v-model="dialogVisible" title="个人中心" width="30%" :before-close="handleClose">
+         <el-dialog v-model="dialogVisible" title="个人中心" width="30%" >
         <!-- 头像 -->
-        
-           <div        >
+        <div style="display: flex;">
+           <div>
           <img style="width: 1rem; height: 1rem;" v-if="imgUrl" :src="imgUrl" @click="changeImage"  />
           <input type="file"  id="upload" style="display:none;" accept="image/gif,image/jpeg,image/png,image/jpg" @change="changepic"/>
-          
         </div>
-        <div>用户名：{{username}}</div>
+        <div style="margin-left:.05rem">
+        <div style="font-size: .2rem;color: black;">用户名：{{username}}</div>
         <el-button type="text" @click="showOldInput=!showOldInput">想要修改密码？点这里</el-button>
         <div style="display: flex;">
-          <el-input v-if="showOldInput" type="password" v-model="oldpassword" placeholder="请输入原始密码" clearable />
+          <el-input v-if="showOldInput" type="password" v-model="oldpassword" placeholder="请输入原始密码" style="margin: 0 .1rem .1rem 0;width: 1.8rem;" clearable />
         <el-button type="primary" v-if="showOldInput" @click="handleCheck" >验证</el-button>
         </div>
-        
-        
-        <el-input v-if="showNewInput"  type="password" v-model="newpassword" placeholder="请输入新密码" clearable />
-        <el-input v-if="showNewInput"  type="password" v-model="ensurepassword" placeholder="请再次确认新密码" clearable />
+        <el-input v-if="showNewInput"  type="password" v-model="newpassword" placeholder="请输入新密码" style="margin-bottom:.1rem;width: 1.8rem;" clearable />
+        <el-input v-if="showNewInput"  type="password" v-model="ensurepassword" placeholder="请再次确认新密码" style="width: 1.8rem;" clearable />
+      </div>
+      </div>
            <template #footer>
              <span class="dialog-footer">
                <el-button @click="dialogVisible = false">取消</el-button>
@@ -54,8 +54,12 @@
      import { UploadFilled } from '@element-plus/icons-vue'
 import '../style/iconfont.css'
 import {
+    useRouter
+  } from 'vue-router'
+  import {
     useStore
   } from 'vuex'
+
   import { ElMessage } from 'element-plus'
      export default {
        name: 'Header',
@@ -64,6 +68,7 @@ import {
 const store=useStore()
 const username=store.state.identifications[store.state.loginState-1].name
 console.log(username,"username")
+console.log(store.state.identifications,"identifications")
 const oldpassword=ref("")
 const newpassword=ref("")
 const ensurepassword=ref("")
@@ -128,18 +133,16 @@ var img
            dialogVisible.value = true
            console.log("个人中心")
          }
-         const handleClose = () => {
-           ElMessageBox.confirm('Are you sure to close this dialog?')
-             .then(() => {
-          done()
-             })
-             .catch(() => {
-               // catch error
-             })
-         }
+         const router=useRouter()
+       const logout=()=>{
+        store.commit('setLoginState', 0)
+        console.log(store.state.loginState,"loginState")
+         router.push({name:'Login'})
+        
+       }
          return {
            showEC,
-           handleClose,
+          logout,
            dialogVisible,
            editVisible,
           changepic,

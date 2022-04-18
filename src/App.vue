@@ -14,5 +14,8 @@
       imageURL: ''
     }])
   }
+  if(!localStorage.loginState){
+    localStorage.loginState=0
+  }
  
 </script>
