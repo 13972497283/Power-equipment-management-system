@@ -6,10 +6,10 @@
       <div class="continer__main__content">
         <div class="buttons">
           <el-input placeholder="请输入关键字" clearable v-model="input" style="width:3rem ;margin-right:.1rem" />
-          <el-button type="primary" @click="handleSearch"><span class="iconfont"
+          <el-button type="primary" @click="handleSearch" :disable="permission"><span class="iconfont"
               style="margin-right:.05rem;font-size:.2rem">&#xe621;</span>查询
           </el-button>
-          <el-button type="primary" @click="handleAdd"><span class="iconfont"
+          <el-button type="primary" @click="handleAdd" :disabled="permission"><span class="iconfont"
               style="margin-right:.05rem">&#xe60e;</span>新增
           </el-button>
         </div>
@@ -39,7 +39,7 @@
           <el-table-column label=" 操作" fixed="right" align="center" width="200">
             <!-- <div> -->
             <template v-slot="scope">
-              <el-button @click="openDetail(scope)">查看</el-button>
+              <el-button @click="openDetail(scope.row)" >查看</el-button>
               <el-button type="primary" :disabled="notUse(scope.$index,scope.row)"
                 @click="editItem(scope.row,scope.$index)">修改
               </el-button>
@@ -109,7 +109,7 @@
 
         <!-- 修改 -->
         <el-dialog v-model="editDialogVisible" :title="currentTitle" width="40%" :before-close="handleClose">
-          <el-form :model="currentItem" label-width="120px" :rules="rules" ref="editrule">
+          <el-form  :model="currentItem" label-width="120px" :rules="rules" ref="editrule" >
             <!-- <el-form :model="currentItem" label-width="120px" :rules="rules" ref="formrule"> -->
             <!--  ref用于将表单节点绑定在此元素上 -->
 
@@ -136,17 +136,14 @@
             <el-button type="text" style="margin-left:1.21rem; position=relative;margin-top:-50px"
               @click="addmaintain=true">新建维修
             </el-button>
-
             <el-form-item label="维修时间" v-if="addmaintain" prop="newMaintainTime">
               <el-date-picker v-model="newMaintain.time" type="date" placeholder="选择日期" style="width: 2rem"
                 format="YYYY/MM/DD" value-format="YYYY-MM-DD" />
               <el-button type="danger" style="margin-left:5px" @click="deleteNewMaintain">删除</el-button>
               <el-button type="primary" style="margin-left:5px" @click="handleAddMaintain">确认</el-button>
-
             </el-form-item>
             <el-form-item label="维修描述" v-if="addmaintain" prop="newMaintainDescribe">
               <el-input type="textarea" style="width:2rem " rows="2" v-model="newMaintain.describe" />
-
             </el-form-item>
 
           </el-form>
@@ -159,6 +156,72 @@
         </el-dialog>
         <!-- 修改 -->
 
+        <!-- 查看 -->
+        <el-dialog v-model="detailDialogVisible" title="详情" width="60%" :before-close="handleClose">
+        
+          <div class="app-container" id="printForm">
+            <div style="display: flex;"><h2 align="center" style="margin-bottom: 15px;text-align: center;width: 100%;">设备信息详情表 </h2> 
+            <div class="iconfont" @click="print" style="margin-top: 5px;font-size: 20px;cursor: pointer;">&#xe6c9;</div>
+          </div>
+            <p align="right" style="margin-bottom: 10px;">负责人：{{printTable.handler}}&emsp; &emsp; &emsp;&emsp;日期：{{printTable.currentTime}}</p>
+            
+            <!-- 表格 -->
+            <table align="center" valign="middle" border="1" width="100%"
+              cellspacing="0">
+                <tr align="center" valign="middle">
+                    <td rowspan="2" width="25%" style="padding: 10px;">RFID编码</td>
+                    <td rowspan="2" width="25%" style="padding: 10px;">{{printTable.RFID}}</td>
+                    <td width="25%" style="padding: 10px;">运行状态</td>
+                    <td width="25%" style="padding: 10px;">{{printTable.status}}</td>
+                </tr >
+                <tr align="center" valign="middle">
+                    <td style="padding: 10px;">设备类型</td>
+                    <td style="padding: 10px;">{{printTable.type}}</td>
+                </tr>
+        
+                <tr align="center">
+                    <td style="padding: 10px;">购置时间</td>
+                    <td  style="padding: 10px;" align="center" valign="middle">{{printTable.buyTime}}</td>
+                    <td style="padding: 10px;">报废时间</td>
+                    <td  style="padding: 10px;" align="center" valign="middle">{{printTable.scrapTime||'未报废'}}</td>
+                </tr>
+                <tr align="center">
+                  <td style="padding: 10px;">生产厂家</td>
+                  <td style="padding: 10px;" align="center" valign="middle">{{printTable.manufacturer}}</td>
+                  <td style="padding: 10px;">购置金额</td>
+                  <td style="padding: 10px;" align="center" valign="middle">{{printTable.money}}元</td>
+              </tr>
+              <tr align="center">
+                <td style="padding: 10px;">设备所在地</td>
+                <td style="padding: 10px;" align="center" colspan="3" valign="middle">{{printTable.location}}</td>
+                
+            </tr>
+            <tr align="center">
+              <td style="padding: 10px;">设备用途</td>
+              <td style="padding: 10px;" align="center" colspan="3" valign="middle">{{printTable.use}}</td>
+          </tr>
+          <tr align="center">
+            <td style="padding: 10px;" colspan="4">维修情况</td>      
+        </tr>
+        <tr align="center">
+          <td style="padding: 10px;" colspan="1">维修时间</td>  
+          <td style="padding: 10px;" colspan="3">维修描述</td>    
+      </tr>
+      <tr align="center" v-for="(item,index) in printTable.maintainList " :key=index>
+        <td style="padding: 10px;" colspan="1">{{item.time}}</td>  
+        <td style="padding: 10px;" colspan="3">{{item.describe}}</td>    
+    </tr>
+    <tr v-if="!printTable.maintainList">
+      <td colspan="4" style="padding: 10px;" align="center">暂无维修信息</td>
+    </tr>
+            </table>
+        </div>
+          <template #footer>
+            <span class="dialog-footer">
+              <el-button @click="detailDialogVisible = false">关闭</el-button>
+            </span>
+          </template>
+        </el-dialog>
       </div>
     </div>
   </div>
@@ -181,7 +244,8 @@
   Header
   from '../components/Header'
   import Aside from '../components/Aside.vue'
-
+  // import printJS from 'print-js'
+  import print from 'print-js'
   function clone(obj) {
     if (typeof obj === "string", typeof obj === "number", typeof obj === "boolean", typeof obj === "undefined") {
       return obj;
@@ -196,6 +260,35 @@
       return obj2;
     }
   }
+  const getCurrentTime = () => {
+  var date = new Date();
+  var sign1 = "-";
+  var sign2 = ":";
+  var year = date.getFullYear() // 年
+  var month = date.getMonth() + 1; // 月
+  var day = date.getDate(); // 日
+  var hour = date.getHours(); // 时
+  var minutes = date.getMinutes(); // 分
+  var seconds = date.getSeconds() //秒
+  if (month >= 1 && month <= 9) {
+    month = "0" + month;
+  }
+  if (day >= 0 && day <= 9) {
+    day = "0" + day;
+  }
+  if (hour >= 0 && hour <= 9) {
+    hour = "0" + hour;
+  }
+  if (minutes >= 0 && minutes <= 9) {
+    minutes = "0" + minutes;
+  }
+  if (seconds >= 0 && seconds <= 9) {
+    seconds = "0" + seconds;
+  }
+  var currentTime = year + sign1 + month + sign1 + day + " " + hour + sign2 + minutes + sign2 + seconds
+
+  return currentTime
+}
   export default {
     name: 'Home',
     components: {
@@ -207,6 +300,7 @@
       let input = ref("")
       const dialogVisible = ref(false)
       const editDialogVisible = ref(false)
+      const  detailDialogVisible=ref(false)
       const store = useStore()
       const tableData = reactive(store.state.equipmentList)
       let currentItem = ref({})
@@ -214,7 +308,9 @@
       let addmaintain = ref(false)
       let empty = ref('')
       let selectedList = ref([])
-
+      let printTable=ref({})
+      let permission=ref(store.state.loginState==1?false:true)
+   
       let newMaintain = ref({
         time: '',
         describe: ''
@@ -235,6 +331,7 @@
           .then(() => {
             dialogVisible.value = false
             editDialogVisible.value = false
+            detailDialogVisible.value=false
           })
           .catch(() => {
             // catch error
@@ -373,17 +470,38 @@
 
       }
       const notUse = (index, row) => {
-        if (row.status == "已报废") {
+        if(permission.value){
+          return true
+        }else{
+          if (row.status == "已报废") {
           console.log("1")
           return true
         }
         console.log("2")
         return false
       }
+        }
+        
 
-      const openDetail = (scope) => {
-        console.log(scope, "scope")
+      const openDetail = (row) => {
+        printTable.value=row
+        printTable.value.handler=store.state.identifications[store.state.loginState - 1].name
+        printTable.value.currentTime=getCurrentTime()
+        detailDialogVisible.value=true  
+        store.commit('addRecord', {
+                  'RFID': printTable.value.RFID,
+                  'handle': '查看设备信息'
+                })      
+        console.log(printTable,"print")
       }
+     
+  const print=()=>{
+    printJS('printForm','html')
+    store.commit('addRecord', {
+                  'RFID': printTable.value.RFID,
+                  'handle': '打印设备信息'
+                })    
+  }
       const editItem = (row, index) => {
         editDialogVisible.value = true
         currentItem.value.status = row.status
@@ -464,36 +582,7 @@
             })
           }
         })
-
-
-        // ElMessageBox.confirm(
-        //     '确认提交此次修改吗',
-        //     'Warning', {
-        //       confirmButtonText: '确认',
-        //       cancelButtonText: '取消',
-        //       type: 'warning',
-        //     }
-        //   )
-        //   .then(() => {
-        //     store.commit('editEquipment', {
-        //       'index': equipmentIndex.value,
-        //       'item': currentItem.value
-        //     })
-        //     editDialogVisible.value = false
-        //     ElMessage({
-        //       type: 'success',
-        //       message: '修改信息已提交',
-        //     })
-        //   })
-        //   .catch(() => {
-        //     ElMessage({
-        //       type: 'info',
-        //       message: '取消操作',
-        //     })
-        //   })
-
-
-      }
+            }
       const deleteItem = (index, row) => {
         ElMessageBox.confirm(
             '确认删除该设备信息？该操作不可逆，删除后将无法恢复该设备任何信息，请谨慎操作！！！',
@@ -528,29 +617,19 @@
         let obj = {}
         if (empty.value !== '') {
           for (let equipment in tableData) {
-
             for (let item in tableData[equipment]) {
-
               if (tableData[equipment][item].indexOf(input.value) > -1) {
-
                 if (!obj[tableData[equipment].RFID]) {
                   console.log(tableData[equipment][item], '符合')
                   selectedList.value.push(tableData[equipment])
-
                   obj[tableData[equipment].RFID] = true
-
-
                 }
               }
-
-
             }
-
           }
         }
-
       }
-
+   
       return {
         tableData,
         showEC,
@@ -578,7 +657,11 @@
         deleteItem,
         selectedList,
         handleSearch,
-        empty
+        empty,
+        detailDialogVisible,
+        printTable,
+        print,
+        permission
       }
     }
 

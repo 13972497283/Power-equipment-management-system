@@ -29,6 +29,7 @@
     reactive
   } from 'vue'
   export default {
+    name:'Login',
     setup() {
       const router = useRouter()
       const store = useStore()
