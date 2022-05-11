@@ -494,7 +494,8 @@
                 })      
         console.log(printTable,"print")
       }
-     
+
+      /*打印设备信息*/
   const print=()=>{
     printJS('printForm','html')
     store.commit('addRecord', {

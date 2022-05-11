@@ -77,7 +77,6 @@
 
           }
         }
-        console.log(selectedList)
       }
       return {
         recordList,

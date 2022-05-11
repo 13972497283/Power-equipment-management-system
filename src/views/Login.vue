@@ -37,8 +37,11 @@
       let account = ref('')
       let password = ref('')
       const logined = () => {
+        let i=0
         for (let item in accountList) {
+          i++
           if (accountList[item].name == account.value && accountList[item].password == password.value) {
+         
             console.log(store.state.loginState, 'vux')
             if (account.value == accountList[0].name) {
               store.commit('setLoginState', 1)
@@ -48,6 +51,12 @@
             router.push({
               name: 'Home'
             })
+            break
+          }else{
+            if(i>=2){
+              alert("账号或用户名有误，请重新输入")
+             
+            }
           }
         }
       }
